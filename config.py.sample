@@ -1,0 +1,25 @@
+THINGWORX_HOST = ""
+APP_KEY = ""
+HTTP_BASIC_AUTH = ""
+HTTP_USERNAME = ""
+HTTP_PASSWORD = ""
+
+basestation = {
+                "com_port": "COM3",
+                "baud_rate": 921600,
+                "nodes": [
+                    {
+                        "address": 56609,
+                        "type": "temp",
+                        "thingName": "lordThing",
+                        "thingProperties": {
+                                "ch1": "temp",
+                                "ch7": "internal_temp"
+                        }
+                    }, {
+                        "address": 57861,
+                        "type": "force",
+                        "thingName": "forceThing",
+                        "thingProperties": "force"
+                    }]
+                }
