@@ -32,13 +32,12 @@ def connectToNode(node_addr, bs):
     print("Connect node: " + node_addr)
     return node
 
-
-class TempNode:
-    def __init__(self, node_addr, node_type, thingName, properties):
-        self.node_addr = node_addr
+class NodeTemplate:
+    def __init__(self, node_addr, node_type, thing_name, properties):
+        slef.node_addr = node_addr
         self.node_type = node_type
         self.node = None
-        self.thingName = thingName
+        self.thing_name = thing_name
         self.properties = ast.literal_eval(properties)
 
     def connectNode(self, bs):
@@ -46,24 +45,19 @@ class TempNode:
         print("Connect node: " + self.node_addr)
         return self.node
 
-    def getDataFromSweep(self, sweep):
-        for dataPoint in sweep.data():
-            chan = dataPoint.channelName()
-            val = dataPoint.as_float()
-            if val is not None:
-                print(str(self.node_addr) + "-" + str(self.properties[chan]) + "-" + str(val))
-                self.sendData(self.properties[chan], val)
-            else:
-                print("error parsing data sweep")
-
     def getNodeAddr(self):
         return self.node_addr
 
     def getNodeType(self):
         return self.node_type
 
-    def sendData(self, property, data):
-        thingworx.putDataToThing(self.thingName, property, data)
+    def sendData(self, prop, data):
+        return thingworx.putDataToThing(self.thing_name, prop, data)
+
+    def createThing(self):
+        thingworx.createThing(self.thing_name)
+        for p in self.properties:
+            thingworx.addPropertyToThing(self.thing_name, p["name"], p["type"])
 
     def cleanUp(self):
         print("Cleaning up node: " + self.node_addr)
@@ -78,18 +72,34 @@ class TempNode:
         else:
             print("Setting " + self.node_addr + " to idle failed")
 
-class ForceNode:
-    def __init__(self, node_addr, node_type, thingName, thingPropertyName):
-        self.node_addr = node_addr
-        self.node_type = node_type
-        self.node = None
-        self.thingName = thingName
-        self.thingPropertyName = thingPropertyName
 
-    def connectNode(self, bs):
-        self.node = mscl.WirelessNode(int(self.node_addr), bs)
-        print("Connect node: " + self.node_addr)
-        return self.node
+class TempNode(NodeTemplate):
+    def __init__(self, node_addr, node_type, thing_name, properties):
+        NodeTemplate.__init__(self, node_addr, node_type, thing_name, properties)
+
+    def getDataFromSweep(self, sweep):
+        for dataPoint in sweep.data():
+            chan = dataPoint.channelName()
+            val = dataPoint.as_float()
+            if val is not None:
+                prop = None
+                # Get proper property (based on channel)
+                for p in self.properties:
+                    if p["channel"] == chan:
+                        prop = p
+                # If property is matched, send data
+                if prop is not None:
+                    print(str(self.node_addr) + "-" + str(prop["name"]) + "-" + str(val))
+                    self.sendData(property["name"], val)
+                else:
+                    print("error matching data channel to properties")
+            else:
+                print("error parsing data sweep")
+
+
+class ForceNode(NodeTemplate):
+    def __init__(self, node_addr, node_type, thing_name, properties):
+        NodeTemplate.__init__(self, node_addr, node_type, thing_name, properties)
 
     def getDataFromSweep(self, sweep):
         val = []
@@ -97,29 +107,13 @@ class ForceNode:
             val.append(dataPoint.as_float())
 
         if len(val) == 1:
-            print(str(self.node_addr) + "-" + self.thingPropertyName + "-" + str(val[0]))
+            prop = None
+            if len(self.properties) == 1:
+                prop = self.properties[0]
+            else:
+                print("problem with force node properties")
+                return
+            print(str(self.node_addr) + "-" + prop["name"] + "-" + str(val[0]))
             self.sendData(self.thingPropertyName, val[0])
         else:
             print("error parsing dataSweep")
-
-    def getNodeAddr(self):
-        return self.node_addr
-
-    def getNodeType(self):
-        return self.node_type
-
-    def sendData(self, property, data):
-        thingworx.putDataToThing(self.thingName, property, data)
-
-    def cleanUp(self):
-        print("Cleaning up node: " + self.node_addr)
-        status = self.node.setToIdle()
-        while not status.complete(300):
-            print(".")
-        result = status.result()
-        if result == mscl.SetToIdleStatus.setToIdleResult_success:
-            print("Set " + self.node_addr + " to idle")
-        elif result == mscl.SetToIdleStatus.setToIdleResult_canceled:
-            print("Setting " + self.node_addr + " to idle cancelled")
-        else:
-            print("Setting " + self.node_addr + " to idle failed")

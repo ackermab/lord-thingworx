@@ -12,14 +12,25 @@ basestation = {
                         "address": 56609,
                         "type": "temp",
                         "thingName": "lordThing",
-                        "thingProperties": {
-                                "ch1": "temp",
-                                "ch7": "internal_temp"
-                        }
+                        "thingProperties": [
+                            {
+                                "name": "temp",
+                                "channel": "ch1",
+                                "type": "NUMBER"
+                            }, {
+                                "name": "internal_temp",
+                                "channel": "ch7",
+                                "type": "NUMBER"
+                            }]
                     }, {
                         "address": 57861,
                         "type": "force",
                         "thingName": "forceThing",
-                        "thingProperties": "force"
+                        "thingProperties": [
+                            {
+                                "name": "force",
+                                "channel": None,
+                                "type": "NUMBER"
+                            }]
                     }]
                 }

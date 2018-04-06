@@ -1,4 +1,5 @@
 import sys
+import json
 import requests
 
 import config
@@ -25,8 +26,22 @@ def createThing(thingName):
     print(url + "--" + str(response.status_code))
     return response.status_code
 
+def addPropertyToThing(thingName, propertyName, propertyType):
+    url = "http://{}/Thingworx/Things/{}/Services/AddPropertyDefinition".format(config.THINGWORX_HOST, thingName)
+    payload = str("{\"name\":" + "\"" + propertyName + "\",\"type\":\"" + propertyType + "\"}")
+    response = requests.request("POST", url, data=payload, headers=HEADERS)
+    print(url + "--" + str(response.status_code))
+    return response.status_code
+
+
 def getNamesOfThings():
     url = "http://{}/Thingworx/Things".format(config.THINGWORX_HOST)
     response = requests.request("GET", url, headers=HEADERS)
     print(url + "--" + str(response.status_code))
-    return response.status_code
+
+    # Convert response to array of names
+    names = []
+    data = json.loads(response.text)
+    for thing in data["rows"]:
+        names.append(thing["name"])
+    return names

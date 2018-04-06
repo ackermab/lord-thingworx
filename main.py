@@ -155,6 +155,9 @@ class ThingWorxConfig:
             }
         return config
 
+def readConfig():
+    return
+
 def updateConfig(com_port, baud_rate, nodes, tw_config):
     print("Storing new config", com_port, baud_rate, nodes, tw_config)
     return
@@ -163,43 +166,65 @@ def main():
     print("Initializing connection to Lord Sensors and ThingWorx")
     node_obj = []
 
+    config = readConfig()
+
+    # Base Station Config Window
     win1 = Tk()
     app1 = StationConfig(win1)
     win1.mainloop()
     com_port = app1.getComPort()
     baud_rate = app1.getBaudRate()
 
+    # Loop of Node Config Windows
     nodes = []
     index = 0
     while True:
         win2 = Tk()
         app2 = NodeConfig(win2, index)
         win2.mainloop()
-        nodes.append(app2.getNode())
         if app2.getDone():
             break
         else:
+            nodes.append(app2.getNode())
             index = index + 1
 
+    # ThingWorx Server Config Window
     win3 = Tk()
     app3 = ThingWorxConfig(win3)
     win3.mainloop()
     tw_config = app3.getConfig()
 
+    # Store config back to config file
     updateConfig(com_port, baud_rate, nodes, tw_config)
 
     try:
+        # Connect base station
         bs = lord.connectToBaseStation(com_port, baud_rate)
         if bs:
+            # Create network
             network = mscl.SyncSamplingNetwork(bs)
+            # Add each node
             if len(nodes) > 0:
                 for node in nodes:
+                    # Determine type of node
                     if node["type"] == "force":
                         n = lord.ForceNode(node["address"], node["type"], node["thingName"], node["thingProperties"])
                     elif node["type"] == "temp":
                         n = lord.TempNode(node["address"], node["type"], node["thingName"], node["thingProperties"])
+                ##### Sample new node type #####
+                #   elif node["type"] == "foo":
+                #       n = lord.FooNode(node["address"], node["type"], node["thingName"], node["thingProperties"])
+                ##### Copy above section without comments and change foo to type of node
                     else:
-                        continue
+                        continue # Node with type not recognized is skipped
+
+                    # Check ThingWorx Server for node with the same name, add if it doesn't exist
+                    tw_nodes = getNamesOfThings()
+                    if node["thingName"] in tw_nodes:
+                        print("Thing already exists on ThingWorx Server, skipping create")
+                    else:
+                        node.createThing()
+
                     node_obj.append(n)
                     network.addNode(n.connectNode(bs))
 
