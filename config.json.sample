@@ -1,0 +1,34 @@
+{
+    "thingworx_host": "",
+    "app_key": "",
+    "http_basic_auth": "",
+    "http_username": "",
+    "com_port": "COM3",
+    "baud_rate": 921600,
+    "nodes": [
+        {
+            "address": 56609,
+            "type": "temp",
+            "thing_name": "lordThing",
+            "thing_properties": [
+                {
+                    "name": "temp",
+                    "channel": "ch1",
+                    "type": "NUMBER"
+                }, {
+                    "name": "internal_temp",
+                    "channel": "ch7",
+                    "type": "NUMBER"
+                }]
+        }, {
+            "address": 57861,
+            "type": "force",
+            "thing_name": "forceThing",
+            "thing_properties": [
+                {
+                    "name": "force",
+                    "channel": "none",
+                    "type": "NUMBER"
+                }]
+            }]
+        }
