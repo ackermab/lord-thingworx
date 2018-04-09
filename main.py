@@ -148,7 +148,6 @@ def updateConfig(config):
 
 def main():
     print("Initializing connection to Lord Sensors and ThingWorx")
-    node_obj = []
 
     config = readConfig()
 
@@ -158,8 +157,8 @@ def main():
     win1.mainloop()
     config = app1.getUpdatedConfig()
 
-    print(config["nodes"])
     # Loop of Node Config Windows
+    print(config["nodes"]) # Test print for nodes config
     for node in config["nodes"]:
         win2 = Tk()
         app2 = NodeConfig(win2, node)
@@ -170,7 +169,7 @@ def main():
             break
 
     config["nodes"] = nodes
-    print(config["nodes"])
+    print(config["nodes"]) # Test print for nodes config
 
     # ThingWorx Server Config Window
     win3 = Tk()
@@ -181,6 +180,7 @@ def main():
     # Store config back to config file
     updateConfig(config)
 
+    node_obj = []
     try:
         # Connect base station
         bs = lord.connectToBaseStation(config["com_port"], config["baud_rate"])
@@ -207,14 +207,21 @@ def main():
                     if node["thing_name"] in tw_nodes:
                         print("Thing already exists on ThingWorx Server, skipping create")
                     else:
-                        node.createThing()
+                        n.createThing()
 
+                    # Storage for Node objects created above
                     node_obj.append(n)
+
+                    # Add node object to network (n.connectNode() returns an MSCL Node Object)
                     network.addNode(n.connectNode(bs))
 
+            # Apply configuration
             network.applyConfiguration()
+
+            # Begin sampling network
             network.startSampling()
 
+            # At 500ms intervals, get and parse data sweeps
             while True:
                 TIMEOUT = 1000 # 500ms
                 lord.parseData(bs.getData(TIMEOUT), node_obj)
