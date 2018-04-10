@@ -7,9 +7,9 @@
     "baud_rate": 921600,
     "nodes": [
         {
-            "address": 56609,
-            "type": "temp",
-            "thing_name": "lordThing",
+            "node_addr": 56609,
+            "node_type": "temp",
+            "thing_name": "LordThing",
             "thing_properties": [
                 {
                     "name": "temp",
@@ -21,9 +21,9 @@
                     "type": "NUMBER"
                 }]
         }, {
-            "address": 57861,
-            "type": "force",
-            "thing_name": "forceThing",
+            "node_addr": 57861,
+            "node_type": "force",
+            "thing_name": "ForceThing",
             "thing_properties": [
                 {
                     "name": "force",

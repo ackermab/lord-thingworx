@@ -12,7 +12,7 @@ def getNode(node_obj, addr):
     return None
 
 
-def parseData(sweeps, node_obj):
+def parseData(sweeps, node_obj, config):
     # Each data sweep contains minimal data
     # The node.getDataFromSweep(sweep) method for each node object
     # can be written to parse the sweep in the correct way for
@@ -21,7 +21,7 @@ def parseData(sweeps, node_obj):
         addr = sweep.nodeAddress()
         node = getNode(node_obj, addr)
         if node is not None:
-            node.getDataFromSweep(sweep)
+            node.getDataFromSweep(sweep, config)
         else:
             print("error finding associated node for data sweep")
 
@@ -63,7 +63,7 @@ def connectToNode(node_addr, bs):
 ##########################
 class NodeTemplate:
     def __init__(self, node_addr, node_type, thing_name, properties):
-        slef.node_addr = node_addr
+        self.node_addr = node_addr
         self.node_type = node_type
         self.node = None
         self.thing_name = thing_name
@@ -76,17 +76,17 @@ class NodeTemplate:
         print("Connect node: " + self.node_addr)
         return self.node
 
-    def sendData(self, prop, data):
-        return thingworx.putDataToThing(self.thing_name, prop, data)
+    def sendData(self, prop, data, config):
+        return thingworx.putDataToThing(self.thing_name, prop, data, config)
 
-    def createThing(self):
+    def createThing(self, config):
         # Creating a thing involves creating a thing base on a template (remoteThing)
         # and then adding each property to it
         # 
         # Each property requires a name and a data type (NUMBER, STRING, etc.)
-        thingworx.createThing(self.thing_name)
+        thingworx.createThing(self.thing_name, config)
         for p in self.properties:
-            thingworx.addPropertyToThing(self.thing_name, p["name"], p["type"])
+            thingworx.addPropertyToThing(self.thing_name, p["name"], p["type"], config)
 
     def cleanUp(self):
         print("Cleaning up node: " + self.node_addr)
@@ -106,6 +106,7 @@ class NodeTemplate:
 
     def getNodeType(self):
         return self.node_type
+
 
 ########################
 # Temperature Node
@@ -138,8 +139,8 @@ class TempNode(NodeTemplate):
     def __init__(self, node_addr, node_type, thing_name, properties):
         NodeTemplate.__init__(self, node_addr, node_type, thing_name, properties)
 
-    def getDataFromSweep(self, sweep):
-        #Get each data point from the sweep
+    def getDataFromSweep(self, sweep, config):
+        # Get each data point from the sweep
         for dataPoint in sweep.data():
             # A DataPoint Object has these two properties:
             #   - channel (channelName())
@@ -155,7 +156,7 @@ class TempNode(NodeTemplate):
                 # If property is matched, send data
                 if prop is not None:
                     print(str(self.node_addr) + "-" + str(prop["name"]) + "-" + str(val))
-                    self.sendData(property["name"], val)
+                    self.sendData(prop["name"], val, config)
                 else:
                     print("error matching data channel to properties")
             else:
@@ -188,7 +189,7 @@ class ForceNode(NodeTemplate):
     def __init__(self, node_addr, node_type, thing_name, properties):
         NodeTemplate.__init__(self, node_addr, node_type, thing_name, properties)
 
-    def getDataFromSweep(self, sweep):
+    def getDataFromSweep(self, sweep, config):
         # A DataPoint for this sweep type usually has 1 value
         # Occasionally, a DataPoint will have 2 values, discard those sweeps
         val = []
@@ -204,7 +205,7 @@ class ForceNode(NodeTemplate):
                 print("problem with force node properties")
                 return
             print(str(self.node_addr) + "-" + prop["name"] + "-" + str(val[0]))
-            self.sendData(self.thingPropertyName, val[0])
+            self.sendData(prop["name"], val[0], config)
         else:
             print("error parsing dataSweep")
 

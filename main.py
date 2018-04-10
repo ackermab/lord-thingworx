@@ -1,7 +1,10 @@
 import packages.mscl as mscl
 import packages.lord as lord
+import packages.thingworx as thingworx
+
 import json
 
+from base64 import *
 from tkinter import *
 
 class StationConfig:
@@ -31,7 +34,7 @@ class StationConfig:
         self.parent.destroy()
 
     def getUpdatedConfig(self):
-        return config
+        return self.config
 
 
 class NodeConfig:
@@ -56,7 +59,7 @@ class NodeConfig:
         self.e1.insert(0, self.node["node_addr"])
         self.e2.insert(0, self.node["node_type"])
         self.e3.insert(0, self.node["thing_name"])
-        self.e4.insert(0, self.node["thing_properties"])
+        self.e4.insert(0, str(self.node["thing_properties"]))
         self.e1.grid(row=0, column=1)
         self.e2.grid(row=1, column=1)
         self.e3.grid(row=2, column=1)
@@ -64,7 +67,7 @@ class NodeConfig:
 
         Button(self.parent, text='Add and Add Another', command=self.addAnother).grid(row=4, column=0, sticky=W)
         Button(self.parent, text='Add and Finish Nodes', command=self.completeAdding).grid(row=4, column=1, sticky=W)
-        Button(self.parent, text='Cancel', command=self.concelAdding).gri(row=4, column=2, sticky=W)
+        Button(self.parent, text='Cancel', command=self.cancelAdding).grid(row=4, column=2, sticky=W)
 
     def addAnother(self):
         self.setValues()
@@ -121,18 +124,18 @@ class ThingWorxConfig:
         
         Button(self.parent, text='Configure Basestation', command=self.setConfig).grid(row=4, column=0, sticky=W)
 
+    def createBasicAuth(self, username, password):
+        basic = b64encode(bytes(username + ":" + password, "utf-8"))
+        basic = "Basic " + str(basic.decode("utf-8"))
+        print(basic)
+        return basic
+
     def setConfig(self):
         self.config["thingworx_host"] = self.e1.get()
         self.config["app_key"] = self.e2.get()
-        self.config["http_basic_auth"] = createBasicAuth(self.e3.get(), self.e4.get()) # We shouldn't really save this
+        self.config["http_basic_auth"] = self.createBasicAuth(self.e3.get(), self.e4.get())  # Better not to store this
         self.config["http_username"] = self.e3.get()
         self.parent.destroy()
-
-    def createBasicAuth(self, username, password):
-        basic = b64encode(bytes(username + ":" + password, "utf-8")
-        basic = "Basic " + basic
-        print(basic)
-        return basic
 
     def getUpdatedConfig(self):
         return self.config
@@ -144,7 +147,7 @@ def readConfig():
 
 def updateConfig(config):
     with open('config.json', 'w') as f:
-        json.dump(config, f)
+        json.dump(config, f, indent=4)
 
 def main():
     print("Initializing connection to Lord Sensors and ThingWorx")
@@ -159,15 +162,15 @@ def main():
 
     # Loop of Node Config Windows
     print(config["nodes"]) # Test print for nodes config
+    nodes = []
     for node in config["nodes"]:
         win2 = Tk()
         app2 = NodeConfig(win2, node)
         win2.mainloop()
         if app2.getNode() is not None:
-            node = app2.getNode()
+            nodes.append(app2.getNode())
         if app2.getDone():
             break
-
     config["nodes"] = nodes
     print(config["nodes"]) # Test print for nodes config
 
@@ -188,26 +191,28 @@ def main():
             # Create network
             network = mscl.SyncSamplingNetwork(bs)
             # Add each node
-            if len(nodes) > 0:
-                for node in nodes:
+            if len(config["nodes"]) > 0:
+                for node in config["nodes"]:
                     # Determine type of node
-                    if node["type"] == "force":
-                        n = lord.ForceNode(node["address"], node["type"], node["thing_name"], node["thing_properties"])
-                    elif node["type"] == "temp":
-                        n = lord.TempNode(node["address"], node["type"], node["thing_name"], node["thing_properties"])
+                    if node["node_type"] == "force":
+                        n = lord.ForceNode(node["node_addr"], node["node_type"], node["thing_name"], node["thing_properties"])
+                    elif node["node_type"] == "temp":
+                        n = lord.TempNode(node["node_addr"], node["node_type"], node["thing_name"], node["thing_properties"])
                 ##### Sample new node type #####
-                #   elif node["type"] == "foo":
-                #       n = lord.FooNode(node["address"], node["type"], node["thing_name"], node["thing_properties"])
+                #   elif node["node_type"] == "foo":
+                #       n = lord.FooNode(node["node_addr"], node["node_type"], node["thing_name"], node["thing_properties"])
                 ##### Copy above section without comments and change foo to type of node
                     else:
-                        continue # Node with type not recognized is skipped
+                        continue  # Node with type not recognized is skipped
 
+                    ### This segment does not work. ThingWorx API for creating a thing causes them to not update
+                    ### Properties upon a PUT request
                     # Check ThingWorx Server for node with the same name, add if it doesn't exist
-                    tw_nodes = getNamesOfThings()
-                    if node["thing_name"] in tw_nodes:
-                        print("Thing already exists on ThingWorx Server, skipping create")
-                    else:
-                        n.createThing()
+                    #tw_nodes = thingworx.getNamesOfThings(config)
+                    #if node["thing_name"] in tw_nodes:
+                    #    print(node["thing_name"] + " already exists on ThingWorx Server, skipping create")
+                    #else:
+                    #    n.createThing(config)
 
                     # Storage for Node objects created above
                     node_obj.append(n)
@@ -224,7 +229,7 @@ def main():
             # At 500ms intervals, get and parse data sweeps
             while True:
                 TIMEOUT = 1000 # 500ms
-                lord.parseData(bs.getData(TIMEOUT), node_obj)
+                lord.parseData(bs.getData(TIMEOUT), node_obj, config)
 
     except KeyboardInterrupt:
         for node in node_obj:
