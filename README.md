@@ -33,7 +33,7 @@ The config file can be editted to allow for easy running of the application.  If
     * "channel": "<string>",    (Some nodes have a channel for the data, if no channel put "none")
     * "type": "<string>"        (The type ThingWorx considers the data to be)
 * The following are examples for a Temperate Sensor and a Force Transducer:
-  * {
+  * ```{
             "address": 56609,
             "type": "temp",
             "thing_name": "lordThing",
@@ -47,8 +47,8 @@ The config file can be editted to allow for easy running of the application.  If
                     "channel": "ch7",
                     "type": "NUMBER"
                 }]
-    }
-  * {
+    }```
+  * ```{
             "address": 57861,
             "type": "force",
             "thing_name": "forceThing",
@@ -59,7 +59,7 @@ The config file can be editted to allow for easy running of the application.  If
                     "type": "NUMBER"
                 }]
             }]
-    }
+    }```
 ### Running the Application
 
 
