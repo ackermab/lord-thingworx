@@ -69,7 +69,7 @@ After installing the required software listed above, running the application is 
 * Plug in your base station and turn on your nodes
 * Verify the COM Port your base station is using (Windows Device Manager)
 * Double-Click the file, `main.py` and a command prompt window will appear (you may need to double-click a second time)
-* The configuration prompts will appear and you can click through them
+* The configuration prompts will appear and you can click through them. They will automatically fill with data from the config file, but you can change them manually if required
 
 ![Base Station Configuration](images/pic-bs.png)
 
