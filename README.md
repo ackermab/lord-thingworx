@@ -4,7 +4,7 @@
 ### Requirements
 * Python 3.6 64-Bit [Python Download](https://www.python.org/ftp/python/3.6.0/python-3.6.0-amd64.exe)
 * LORD SensorConnect [Lord Website](http://www.microstrain.com/software)
-  * This software is required to install due to the need for windows to have device drivers.  Installing the software will install the required drivers
+  * This software is required to install due to the need for windows to have device drivers.  Installing the software will install the required drivers and allow your machine to configure a COM port for the base station.
 * Microsoft Visual C++ 2017 [Download Link](https://aka.ms/vs/15/release/vc_redist.x64.exe)
 
 ### Setup & Configuration
